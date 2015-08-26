@@ -9,7 +9,6 @@
 
 namespace Mardraze\CoreBundle\Service;
 
-use Mardraze\CoreBundle\Entity\User;
 
 class Depedencies {
 
@@ -52,13 +51,6 @@ class Depedencies {
         return $this->getDoctrine()->getRepository($this->getRepositoryName($str));
     }
 
-    public function getRepositoryName($str){
-        if(strpos($str, ':') === false){
-            $str = BUNDLE_NAME.':'.$str;
-        }
-        return $str;
-    }
-
     public function persist($obj){
         $this->getManager()->persist($obj);
         return $this;
@@ -78,6 +70,10 @@ class Depedencies {
 
     public function getParameter($str){
         return $this->container->getParameter($str);
+    }
+
+    public function getContainer(){
+        return $this->container;
     }
 
     public function get($str){
@@ -289,17 +285,11 @@ class Depedencies {
             $res = str_replace('//', '/', 'views/'.implode('/', $path));
         }
 
-        if(!$bundle){
-            $bundle = BUNDLE_NAME;
-        }
         return $this->get('kernel')->locateResource('@'.$bundle).'Resources/'.$res;
     }
 
 
     public function bundleName($bundle = null){
-        if(!$bundle){
-            $bundle = BUNDLE_NAME;
-        }
         if(strpos($bundle, '\\') !== false){
             $arr = explode('\\', $bundle);
             $bundle = array_pop($arr);
@@ -338,12 +328,6 @@ class Depedencies {
         return $this->getParameter('kernel.environment') == 'prod';
     }
 
-    /**
-     * @return CloudManager
-     */
-    public function getCloudManager(){
-        return $this->get('mardraze_core.cloud_manager');
-    }
 
     /**
      * @return \AmazonS3
@@ -382,10 +366,6 @@ class Depedencies {
      */
     public function getGoogleDriveApi(){
         return $this->get('mardraze_core.google_drive_api');
-    }
-
-    public function hasPackage($package){
-        return in_array($package, $this->getCloudManager()->getMyPackages());
     }
 
     public function getProcessData($cmd){
@@ -431,7 +411,7 @@ class Depedencies {
         file_put_contents($file, $shFile."\n", FILE_APPEND);
         $shFile = $file;
         $this->killOldProcess($shFile);
-        $logFile = $this->touch('logs/'.BUNDLE_NAME.'/runSh/'.basename($shFile).'.log');
+        $logFile = $this->touch('logs/runSh/'.basename($shFile).'.log');
         chmod($shFile, 0755);
         $cmd = sprintf("%s >> %s 2>&1 & echo $! > %s", $shFile, $logFile, '/dev/null');
 

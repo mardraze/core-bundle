@@ -30,7 +30,13 @@ class MardrazeBaseCommand extends Command{
     public function run(InputInterface $input, OutputInterface $output)
     {
         $this->depedencies = $this->getApplication()->getKernel()->getContainer()->get('mardraze_core.depedencies');
-        $this->depedencies->setupRouter();
+        $context = $this->depedencies->get('router')->getContext();
+
+        $mainHost = $this->depedencies->getParameter('mardraze_http_host');
+        $host = preg_replace('/http(s)?:\/\//', '', $mainHost);
+        $scheme = strpos($mainHost, 'https:') === false ? 'http' : 'https';
+        $context->setHost($host);
+        $context->setScheme($scheme);
         $this->input = $input;
         $this->output = $output;
         return parent::run($input, $output);

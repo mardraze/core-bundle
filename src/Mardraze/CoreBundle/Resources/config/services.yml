@@ -1,5 +1,5 @@
-#parameters:
-#    translator.class:      Mardraze\CoreBundle\Translation\Translator
+parameters:
+    mardraze_http_host:      'http://localhost:8000'
 
 services:
     mardraze_core.depedencies:
