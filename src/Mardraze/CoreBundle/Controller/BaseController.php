@@ -2,13 +2,11 @@
 
 namespace Mardraze\CoreBundle\Controller;
 
-use Mardraze\BasicBundle\Controller\BasicController;
 use Mardraze\CoreBundle\Service\Depedencies;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 
-class BaseController extends BasicController
+class BaseController extends Controller
 {
     /**
      * @var Depedencies
