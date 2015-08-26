@@ -1,9 +1,0 @@
-{% set types = app.session.flashbag.keys() %}
-{% for type in types %}
-    {% for message in app.session.flashbag.get(type) %}
-        <div class="alert alert-{{ type|bootstrap_alert }} alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            {{ message|raw }}
-        </div>
-    {% endfor %}
-{% endfor %}

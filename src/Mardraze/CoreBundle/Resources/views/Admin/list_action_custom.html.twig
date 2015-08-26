@@ -1,4 +1,0 @@
-{% if actions.show_callback is not defined or actions.show_callback.canShow(object, actions) %}
-    <a class="btn btn-sm btn-default {% if actions.class is defined %}{{ actions.class }}{% endif %}" {% if actions.target_blank is defined and actions.target_blank %}target="_blank"{% endif %} href="{{ admin.generateObjectUrl(actions.route, object) }}">{{ actions.label }}</a>
-{% endif %}
-
