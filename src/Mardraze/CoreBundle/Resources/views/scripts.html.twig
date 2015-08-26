@@ -1,0 +1,382 @@
+<script>
+
+    var makePlupload = function(that){
+        var $this = $(that);
+        var id = $this.attr('data-id') || $this.attr('id') || 'plupload_simple_'+Math.floor((Math.random()*1000000));
+        var valueControl = $this.attr('data-set-value');
+        var valuesBind = $this.attr('bind-values');
+        var name = $this.attr('name');
+        var pick_label = $this.attr('md-label') || '{{ 'Select files'|trans }}';
+
+        $this.removeAttr('name')
+                .hide();
+        var html = '<div id="'+id+'_filelist">error</div>\
+        <a class="btn btn-default plupload-pickfiles" id="'+id+'_pickfiles" href="javascript:;">'+pick_label+'</a>\
+        <a class="btn btn-success plupload-uploadfiles" id="'+id+'_uploadfiles" href="javascript:;">{{ 'Upload files'|trans }}</a>\
+        <span class="plupload-wait" id="'+id+'_wait">czekaj...</span>\
+        <span class="plupload-done" id="'+id+'_done">plik załadowany!</span>\
+        <input type="hidden" id="'+id+'_value" '+(name ? ('name="'+name+'"') : '')+' value=""/>';
+        $('<div id="'+id+'_container" class="bx-plupload"></div>').insertBefore($this);
+        $('#'+id+'_container').html(html);
+        var $container = $('#'+id+'_container');
+
+        var setState = function(state){
+            $container
+                    .removeClass('plupload-state-new')
+                    .removeClass('plupload-state-added')
+                    .removeClass('plupload-state-uploading')
+                    .removeClass('plupload-state-uploaded')
+                    .addClass('plupload-state-'+state)
+            ;
+        };
+        var url = '{{ safe_call('oneup_uploader_endpoint', 'gallery') }}';
+        if(!url){
+            alery('oneup_uploader_endpoint is empty');
+        }
+        setState('new');
+        var params = {
+            url: url,
+            filters : {
+                max_file_size: '30mb'
+            },
+            init: {
+                FileUploaded: function(upldr, file, object){
+                    var obj = JSON.parse(object.response);
+                    var $elem = $('#'+id+'_value');
+                    if(valueControl){
+                        $elem = $('#'+valueControl);
+                    }
+                    $elem.val(obj.path);
+
+                    if(valuesBind && undefined != window[valuesBind]){
+                        window[valuesBind](obj.path, $this);
+                    }
+                    setState('uploaded');
+                },
+                BeforeUpload: function(){
+                    setState('uploading');
+                },
+                BeforeFilesAdded: function(up, files) {
+                    setState('added');
+                    if($this.attr('md-autoupload') == '1'){
+                        $container.find('a.plupload-uploadfiles').click();
+                    }
+                }
+            }
+        };
+        if($this.attr('md-only-image')) {
+            params['filters']['mime_types'] = [
+                {title: "Plik graficzny jpg, gif, png", extensions: "jpg,gif,png"}
+            ];
+        }
+        MardrazeUploader.make(id, params);
+    };
+
+    window.makePlupload = makePlupload;
+    $(document).ready(function(){
+
+
+        /**
+         *
+         * Upload
+         *
+         * HTML:
+         *
+         * <input type="file" name="file" class="plupload" />
+         *
+         * JS:
+         * plupload.full.min.js
+         * mardraze.upload.js
+         *
+         */
+        $('input[type=file].plupload').each(function(){
+            makePlupload(this);
+        });
+
+    });
+</script>
+
+<script>
+
+
+
+    $(document).ready(function(){
+
+        requirejs.config({
+            baseUrl: '{{ asset('bundles/mardrazecore/js/requirejs') }}'
+        });
+        var cssLoaded = [];
+        var loadCss = function(url, media) {
+            if(typeof url == 'string'){
+                if($.inArray(url, cssLoaded) == -1){
+                    var link = document.createElement("link");
+                    link.type = "text/css";
+                    link.rel = "stylesheet";
+                    link.href = url;
+                    if(media){
+                        link.media = media;
+                    }
+                    document.getElementsByTagName("head")[0].appendChild(link);
+                }
+            }else{
+                for(var i = 0; i<url.length; i++){
+                    loadCss(url[i]);
+                }
+            }
+        };
+
+
+        var requiresync = function(arr, done){
+            var i=0;
+            var next = function(){
+                if(i<arr.length){
+                    require([arr[i]], next);
+                }else{
+                    done();
+                }
+                i++;
+            };
+            next();
+        };
+
+        $( "input.type-json" ).each(function(){
+            var that = this;
+            var id = $(that).attr('id');
+            if(!id){
+                id = 'type_json_'+Math.floor((Math.random()*1000000));
+                $(that).attr('id', id);
+            }
+            var title = $(that).attr('data-json-title');
+            try{
+                var properties = JSON.parse($(that).val());
+                requirejs([
+                    '{{ asset('bundles/mardrazecore/js/lib/jsoneditor.js') }}'
+                ], function(){
+                    // Initialize the editor with a JSON schema
+                    var editor = new JSONEditor(document.getElementById(id),{
+                        schema: {
+                            type: "object",
+                            title: title,
+                            properties: properties
+                        }
+                    });
+                });
+            }catch(e){
+                console.log(e);
+            }
+        });
+        /**
+         * @see Component/send_email/contact.html.twig
+         */
+        $('form.contact-form').each(function(){
+            var that = this;
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/jquery-validation-1.13.1/dist/jquery.validate.min.js') }}'
+            ], function(){
+                $(that).validate();
+                $(that).submit(function(){
+                    if($(that).valid()){
+                        $(that).find('.ajax-loader').removeClass('hide');
+                        $(that).find('[type=submit]').attr('disabled', 'disabled');
+                        $.post($(that).attr('action'), $(this).serialize(), function(res){
+                            $(that).find('.ajax-loader').addClass('hide');
+                            if(res && res.success){
+                                $(that).find('.alerts').removeClass('hide');
+                                $(that).find('.alert-success').removeClass('hide');
+                                $(that).find('.alert-danger').addClass('hide');
+                            }else{
+                                $(that).find('.alerts').removeClass('hide');
+                                $(that).find('.alert-danger').removeClass('hide');
+                                $(that).find('.alert-success').addClass('hide');
+                            }
+                        });
+                    }
+                    return false;
+                });
+            });
+        });
+
+        $( "input.datetimepicker" ).each(function(){
+            var that = this;
+            loadCss([
+                '{{ asset('bundles/mardrazecore/js/lib/datetimepicker/jquery.datetimepicker.css') }}'
+            ]);
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/datetimepicker/jquery.datetimepicker.js') }}'
+            ], function(){
+                $(that).datetimepicker({
+                    datepicker:false
+                });
+            });
+        });
+
+        $('form.validate').each(function() {
+            var that = this;
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/jquery-validation-1.13.1/dist/jquery.validate.min.js') }}',
+                '{{ asset('bundles/mardrazecore/js/lib/jQuery-slimScroll/jquery.slimscroll.min.js') }}'
+            ], function () {
+                $.extend($.validator.messages, {
+                    required: "To pole jest wymagane.",
+                    remote: "Proszę o wypełnienie tego pola.",
+                    email: "Proszę o podanie prawidłowego adresu email.",
+                    url: "Proszę o podanie prawidłowego URL.",
+                    date: "Proszę o podanie prawidłowej daty.",
+                    dateISO: "Proszę o podanie prawidłowej daty (ISO).",
+                    number: "Proszę o podanie prawidłowej liczby.",
+                    digits: "Proszę o podanie samych cyfr.",
+                    creditcard: "Proszę o podanie prawidłowej karty kredytowej.",
+                    equalTo: "Proszę o podanie tej samej wartości ponownie.",
+                    extension: "Proszę o podanie wartości z prawidłowym rozszerzeniem.",
+                    maxlength: $.validator.format("Proszę o podanie nie więcej niż {0} znaków."),
+                    minlength: $.validator.format("Proszę o podanie przynajmniej {0} znaków."),
+                    rangelength: $.validator.format("Proszę o podanie wartości o długości od {0} do {1} znaków."),
+                    range: $.validator.format("Proszę o podanie wartości z przedziału od {0} do {1}."),
+                    max: $.validator.format("Proszę o podanie wartości mniejszej bądź równej {0}."),
+                    min: $.validator.format("Proszę o podanie wartości większej bądź równej {0}.")
+                });
+                $(that).validate({
+                    lang: 'pl'
+                });
+            });
+        });
+
+
+        {#
+
+
+        /**
+         * Editor HTML
+         *
+         * HTML:
+         * <textarea class="ckeditor"></textarea>
+         *
+         * JS:
+         * ckeditor/ckeditor.js
+         */
+        $('textarea.ckeditor').each(function(){
+            var that = this;
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/ckeditor/ckeditor.js') }}'
+            ], function() {
+                var id = $(that).attr('id');
+                if(!id){
+                    id = 'ckeditor_'+Math.floor((Math.random()*1000000));
+                    $(that).attr('id', id);
+                }
+                CKEDITOR.replace(id);
+            });
+        });
+        $('.submit-form-onchange').each(function(){
+            if($(this).attr('type') == 'checkbox'){
+                $(this).on('click', function(){
+                    $(this).closest('form').submit();
+                });
+            }else{
+                $(this).on('change', function(){
+                    $(this).closest('form').submit();
+                });
+            }
+        });
+
+        $('textarea.codemirror').each(function(){
+            var that = this;
+            requirejs([
+                'codemirror',
+                '{{ asset('bundles/mardrazecore/js/lib/codemirror-5.2/mode/yaml/yaml.js') }}',
+                '{{ asset('bundles/mardrazecore/js/lib/codemirror-5.2/mode/javascript/javascript.js') }}',
+                '{{ asset('bundles/mardrazecore/js/lib/codemirror-5.2/mode/css/css.js') }}',
+                '{{ asset('bundles/mardrazecore/js/lib/codemirror-5.2/mode/xml/xml.js') }}'
+            ], function(){
+                var editor = CodeMirror.fromTextArea(document.getElementById($(that).attr('id')), {
+                    lineNumbers: true,
+                    indentWithTabs: false
+                });
+                editor.setOption("extraKeys", {
+                    Tab: function(cm) {
+                        var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+                        cm.replaceSelection(spaces);
+                    }
+                });
+                window.editor = editor;
+            });
+        });
+        $('div[data-calendar-id]').each(function(){
+            var that = this;
+            var theme = $(that).attr('data-theme');
+            if(!theme){
+                theme = 'redmond';
+            }
+            loadCss([
+                'http://fullcalendar.io/js/fullcalendar-2.3.1/fullcalendar.css',
+                '{{ asset('bundles/mardrazecore/css/jquery-ui-themes-1.11.4/themes/') }}' +theme+ '/jquery-ui.min.css',
+                '{{ asset('bundles/mardrazecore/css/jquery-ui-themes-1.11.4/themes/') }}' +theme+ '/theme.css'
+            ]);
+            loadCss('http://fullcalendar.io/js/fullcalendar-2.3.1/fullcalendar.print.css', 'print');
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/fullcalendar.min.js') }}'
+            ], function(){
+                requirejs([
+                    '{{ asset('bundles/mardrazecore/js/lib/gcal.js') }}'
+                ], function(){
+
+                    $(that).fullCalendar({
+                        theme: true,
+                        header: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'month,agendaWeek,agendaDay'
+                        },
+                        googleCalendarApiKey: '{{ google_calendar_api_key }}',
+                        events: {
+                            googleCalendarId: $(that).attr('data-calendar-id'),
+                            className: 'nice-event'
+                        },
+                        eventClick: function(event) {
+                            window.open(event.url, 'gcalevent', 'width=700,height=600');
+                            return false;
+                        }
+                    });
+                });
+            });
+        });
+
+        $( "input.datetimepicker" ).each(function(){
+            var that = this;
+            loadCss([
+                '{{ asset('bundles/mardrazecore/js/lib/datetimepicker/jquery.datetimepicker.css') }}'
+            ]);
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/datetimepicker/jquery.datetimepicker.js') }}'
+            ], function(){
+                $(that).datetimepicker({
+                    datepicker:false,
+                    allowTimes:[
+                        '12:00', '13:00', '15:00',
+                        '17:00', '17:05', '17:20', '19:00', '20:00'
+                    ]
+                });
+            });
+        });
+        $( "input.datepicker" ).each(function(){
+            var that = this;
+            var theme = $(that).attr('data-theme');
+            if(!theme){
+                theme = 'redmond';
+            }
+            loadCss([
+                '{{ asset('bundles/mardrazecore/css/jquery-ui-themes-1.11.4/themes/') }}' +theme+ '/jquery-ui.min.css',
+                '{{ asset('bundles/mardrazecore/css/jquery-ui-themes-1.11.4/themes/') }}' +theme+ '/theme.css'
+            ]);
+            requirejs([
+                '{{ asset('bundles/mardrazecore/js/lib/jquery-ui-1.11.4/jquery-ui.min.js') }}'
+            ], function(){
+                $(that).datepicker();
+            });
+        });
+
+        #}
+    });
+
+</script>
+<script src="{{ asset('bundles/mardrazecore/js/lib/require.js') }}"></script>

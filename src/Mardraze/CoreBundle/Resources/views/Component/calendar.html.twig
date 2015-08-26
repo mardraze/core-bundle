@@ -1,0 +1,10 @@
+{% if themes %}
+    <select onchange="window.location.href = '?theme='+this.value">
+        <option value="">Wybierz styl</option>
+        {% for t in themes %}
+            <option {% if theme == t %}selected="selected"{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+{% endif %}
+
+<div id="calendar" data-calendar-id="{{ calendarId }}"></div>

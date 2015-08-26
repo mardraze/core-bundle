@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="{{ asset('bundles/mardrazecore/css/bootstrap.min.css') }}" type="text/css" media="screen" />
+</head>
+<body>
+    <div class="container">
+        <form class="form-signin" action="{{ path("mardraze_core.test_payment_prepare", {gatewayName: 'paypal_express_checkout_nvp'}) }}" method="post" >
+            <h2 class="form-signin-heading">KUP PRODUKT W PAYPAL!</h2>
+            <label for="price" class="sr-only">Cena</label>
+            <input type="text" id="price" class="form-control" placeholder="Cena produktu" autofocus="" name="order[PAYMENTREQUEST_0_AMT]" value="29.99" required="required" />
+            <label for="currency" class="sr-only">Waluta</label>
+            <input type="text" id="currency" class="form-control" placeholder="Waluta" name="order[PAYMENTREQUEST_0_CURRENCYCODE]" value="PLN" required="required" />
+            <label for="redirect" class="sr-only">Waluta</label>
+            <input type="text" id="redirect" class="form-control" placeholder="Url przekierowania" name="redirect" value="http:{{ url('homepage', {}, true) }}?success=1" required="required" />
+            <button class="btn btn-lg btn-primary btn-block" name="_submit" type="submit">KUP TERAZ</button>
+        </form>
+    </div>
+</body>
+</html>

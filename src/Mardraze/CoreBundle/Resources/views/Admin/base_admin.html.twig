@@ -1,0 +1,13 @@
+{% extends 'SonataAdminBundle::standard_layout.html.twig' %}
+
+{% block sonata_wrapper %}
+    {{ parent() }}
+    {% include "MardrazeCoreBundle::scripts.html.twig" %}
+{% endblock %}
+{% block side_bar_after_nav %}
+    <p class="text-center small" style="border-top: 1px solid #444444; padding-top: 10px; color: #fff">{{ bundleName()|trans }}</p>
+{% endblock %}
+
+{% block notice %}
+    {% include 'MardrazeCoreBundle:Admin:flash_messages.html.twig' %}
+{% endblock notice %}

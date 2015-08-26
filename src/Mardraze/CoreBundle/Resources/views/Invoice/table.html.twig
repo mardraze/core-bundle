@@ -1,0 +1,167 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="table.css" />
+</head>
+<body>
+<!--mpdf
+
+    <htmlpageheader name="myheader">
+
+    </htmlpageheader>
+    <htmlpagefooter name="myfooter">
+        <div style="font-size: 9pt; text-align: center; padding-top: 3mm; ">
+            Strona {PAGENO} / {nb}
+        </div>
+    </htmlpagefooter>
+
+    <sethtmlpageheader name="myheader" value="on" show-this-page="1"/>
+    <sethtmlpagefooter name="myfooter" value="on"/>
+mpdf-->
+
+{% set wystawca = invoice.DokumentHandlowy.Wystawca %}
+{% set odbiorca = invoice.DokumentHandlowy.Odbiorca %}
+{% set dokument = invoice.DokumentHandlowy %}
+{% set pozycje = invoice.DokumentHandlowy.PozycjaDokumentu %}
+
+<table width="100%" style="font-family: serif;" cellpadding="10">
+    <tr>
+        <td width="45%">&nbsp;</td>
+        <td width="55%" align="right" style="border: none">
+            <strong>Sprzedawca:</strong>
+
+            <br/><br/>
+            {{ wystawca.Nazwa }}<br/>
+            {{ wystawca.Ulica }} {{ wystawca.NumerDomu }}<br/>
+            {{ wystawca.KodPocztowy }} {{ wystawca.Miejscowosc }}<br/>
+            NIP: {{ wystawca.NIP }}<br/>
+            Nr rachunku: {{ wystawca.NumerRachunkuBankowego }}
+        </td>
+    </tr>
+</table>
+<br/>
+<hr/>
+
+<table width="100%" style="font-family: serif;" cellpadding="10">
+    <tr>
+        <td width="50%">
+            <span style="font-size: 20pt">Faktura</span>
+        </td>
+        <td width="50%" style="text-align: right; font-size: smaller">
+            Numer dokumentu: {{ dokument.NumerDokumentu }}<br/>
+            Data wystawienia: {{ dokument.DataWystawienia }}<br/>
+            Data dostawy/wykonania usługi: {{ dokument.DataSprzedazy }}
+        </td>
+    </tr>
+</table>
+<hr/>
+<br/>
+<br/>
+
+<table width="100%" style="font-family: serif;" cellpadding="10">
+    <tr>
+        <td width="45%" style="border: none">
+            <strong>Nabywca:</strong>
+            <br/><br/>
+            {{ odbiorca.Nazwa }}<br/>
+            {{ odbiorca.Ulica }} {{ odbiorca.NumerDomu }}/{{ odbiorca.NumerLokalu }}<br/>
+            {{ odbiorca.KodPocztowy }} {{ odbiorca.Miejscowosc }}<br/>
+            NIP: {{ odbiorca.NIP }}
+        </td>
+        <td width="55%">&nbsp;</td>
+    </tr>
+</table>
+<br/>
+
+<table class="items" width="100%" style="font-size: 9pt; border-collapse: collapse;" cellpadding="8">
+    <thead>
+        <tr>
+            <td width="15%">Lp.</td>
+            <td width="40%">Nazwa towaru/usługi</td>
+            <td width="10%">Ilość</td>
+            <td width="10%">j.m.</td>
+            <td width="10%">Cena jedn.</td>
+            <td width="15%">Wartość</td>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- ITEMS HERE -->
+        {% for pozycja in pozycje %}
+            <tr class="vertical-middle">
+                <td align="center">{{ loop.index }}. </td>
+                <td>
+                    {% for nazwa in pozycja.Towar.Nazwa %}
+                        {{ nazwa.Opis }}
+                    {% endfor %}
+                    <br/>
+                    <i style="font-size: 7pt">{{ pozycja.Towar.PKWiU }}</i>
+                </td>
+                <td align="center">{{ pozycja.Ilosc }}</td>
+                <td align="center">{{ pozycja.JednostkaMiary }}</td>
+                <td align="right">{{ pozycja.Cena|price }}</td>
+                <td align="right">{{ (pozycja.Cena * pozycja.Ilosc)|price }}</td>
+            </tr>
+        {% endfor %}
+        <!-- END ITEMS HERE -->
+        <tr>
+            <td class="blanktotal" colspan="4" rowspan="6"></td>
+            <td class="totals">Ogółem:</td>
+            <td class="totals">{{ WartoscBruttoOgolem|pln }}</td>
+        </tr>
+    </tbody>
+</table>
+<br/>
+
+<table class="items" width="45%" style="font-size: 9pt; border-collapse: collapse;" cellpadding="8">
+    <thead>
+        <tr><td>Forma płatności</td><td>Termin płatności</td><td>Kwota do zapłaty</td></tr>
+    </thead>
+    <tbody>
+        <tr><td align="center">Przelew</td><td align="center">2015-06-05</td><td align="right">{{ WartoscBruttoOgolem|price }}</td></tr>
+        <tr>
+            <td class="blanktotal" style="border-right: none;" colspan="3">&nbsp;</td>
+        </tr>
+    </tbody>
+</table>
+<table width="100%" style="font-family: serif;" cellpadding="10">
+    <tr>
+        <td align="right" style="border: none;">
+            <span style="font-size: 20pt">Razem do zapłaty: {{ WartoscBruttoOgolem|pln }}</span><br/>
+            <br/><br/>
+            Słownie: {{ WartoscBruttoOgolem|slowniePLN }}<br/>
+            Zapłacono: 0,00 PLN<br/>
+            Pozostaje do zapłaty: {{ WartoscBruttoOgolem|pln }}
+        </td>
+    </tr>
+</table>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<table width="100%" style="font-family: serif;" cellpadding="10">
+    <tr>
+        <td align="center">
+            <strong>Monika Sobina-Maruszczak</strong>
+        </td>
+        <td align="center">&nbsp;</td><td align="center">&nbsp;</td></tr>
+    <tr>
+        <td width="37%" class="border-top" align="center">
+            Podpis osoby uprawnionej do wystawienia
+        </td>
+        <td width="6%">
+            &nbsp;
+        </td>
+        <td width="16%" class="border-top" align="center">
+            Data odbioru
+        </td>
+        <td width="4%">
+            &nbsp;
+        </td>
+        <td width="37%" class="border-top" align="center">
+            Podpis osoby upoważnionej do odbioru dokumentu
+        </td>
+    </tr>
+</table>
+</body>
+</html>

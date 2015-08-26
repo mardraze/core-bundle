@@ -1,0 +1,87 @@
+<div class="nip-search">
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary btn-lg modal-trigger">
+        Wybierz firmę
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <form class="nip-form validate" onsubmit="return false" action="">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Szukaj firmy w bazie GUS</h4>
+                    </div>
+                    <div style="margin: 30px">
+                        <div class="form-group">
+                            <label>Nip</label>
+                            <input type="text" class="form-control required" placeholder="Nip" name="search[settings][Nip]" />
+                        </div>
+                        <div class="form-group">
+                            <label>Kod z obrazka</label>
+                            <input type="text" class="form-control required" placeholder="Kod z obrazka" name="search[captcha]" />
+                        </div>
+                        <div class="form-group">
+                            <span class="nip-captcha-span"></span>
+                            <img class="nip-captcha-loader" src="{{ asset('bundles/mardrazecore/img/ajax-loader.gif') }}" />
+                            <a href="#" class="nip-captcha-reload hide">reload</a>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <img src="{{ asset('bundles/mardrazecore/img/ajax-loader.gif') }}" class="nip-ajax-loader hide" />
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Zamknij</button>
+                        <button type="submit" class="btn btn-primary">Szukaj</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        if(!window.nip_search_loaded){
+            window.nip_search_loaded = true;
+            $('.nip-search').each(function(){
+                var that = this;
+                var captchaReload = function(){
+                    $(that).find('.nip-captcha-loader').removeClass('hide');
+                    $(that).find('.nip-captcha-reload').addClass('hide');
+                    $(that).find('.nip-captcha-span').html('');
+                    $.get('{{ url('mardraze_nip_search') }}?get_captcha=1', function(res){
+                        $(that).find('.nip-captcha-loader').addClass('hide');
+                        $(that).find('.nip-captcha-reload').removeClass('hide');
+                        $(that).find('.nip-captcha-span').html('<img src="data:image/png;base64,'+res+'" />');
+                    });
+                };
+                var $modal = $(that).find('.modal');
+                $(that).find('.modal-trigger').click(function(){
+                    $modal.modal('show');
+                });
+
+                $(that).find('.nip-captcha-reload').click(function(){
+                    captchaReload();
+                    return false;
+                });
+
+                $modal.on('shown.bs.modal', function () {
+                    captchaReload();
+                });
+                var searching = false;
+                $(that).find('.nip-form').submit(function(){
+                    if(!searching){
+                        searching = true;
+                        $('.nip-ajax-loader').removeClass('hide');
+                        $.post('{{ url('mardraze_nip_search') }}', $(this).serialize(), function(res){
+                            $('.nip-ajax-loader').addClass('hide');
+                            $modal.modal('hide');
+                            searching = false;
+                            window.mardraze_nip_found(res, that);
+                        });
+                    }
+                    return false;
+                });
+            });
+        }
+    });
+</script>

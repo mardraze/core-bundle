@@ -1,0 +1,17 @@
+#parameters:
+#    translator.class:      Mardraze\CoreBundle\Translation\Translator
+
+services:
+    mardraze_core.depedencies:
+        class: Mardraze\CoreBundle\Service\Depedencies
+        arguments: ["@service_container"]
+
+    mardraze_core.twig_extension:
+        class: Mardraze\CoreBundle\Twig\CoreExtension
+        arguments: ["@mardraze_core.depedencies"]
+        tags:
+            - { name: twig.extension }
+
+    mardraze_core.cache:
+        class: Doctrine\Common\Cache\FilesystemCache
+        arguments: ["%kernel.cache_dir%", '.mardraze_core.cache']

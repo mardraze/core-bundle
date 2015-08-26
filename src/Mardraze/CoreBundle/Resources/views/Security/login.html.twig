@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ 'Logowanie'|trans }}</title>
+    <link rel="stylesheet" href="{{ asset('bundles/mardrazecore/css/bootstrap.min.css') }}" type="text/css" media="screen" />
+    <link rel="stylesheet" href="{{ asset('bundles/mardrazecore/css/admin_login.css') }}" type="text/css" media="screen" />
+</head>
+<body>
+    <div style="display: none">
+        {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+            {{ 'layout.logged_in_as'|trans({'%username%': app.user.username}, 'FOSUserBundle') }} |
+            <a href="{{ path('fos_user_security_logout') }}">
+                {{ 'layout.logout'|trans({}, 'FOSUserBundle') }}
+            </a>
+        {% else %}
+            <a href="{{ path('fos_user_security_login') }}">{{ 'layout.login'|trans({}, 'FOSUserBundle') }}</a>
+        {% endif %}
+    </div>
+
+    {% for type, messages in app.session.flashBag.all %}
+        {% for message in messages %}
+            <div class="{{ type }}">
+                {{ message|trans({}, 'FOSUserBundle') }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+    <div class="container">
+        {% if error %}
+            <div class="alert alert-danger">{{ error|trans({}, 'FOSUserBundle') }}</div>
+        {% endif %}
+        <form class="form-signin" action="{{ path("fos_user_security_check") }}" method="post" >
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}" />
+            <h2 class="form-signin-heading">{{ 'Please sign in'|trans }}</h2>
+            <label for="inputEmail" class="sr-only">{{ 'Email address'|trans }}</label>
+            <input type="text" id="inputEmail" class="form-control" placeholder="Email address" autofocus="" name="_username" value="{{ last_username }}" required="required" />
+            <label for="inputPassword" class="sr-only">{{ 'Password'|trans }}</label>
+            <input type="password" id="inputPassword" class="form-control" placeholder="Password" name="_password" required="required" />
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="_remember_me" value="on"> {{ 'security.login.remember_me'|trans({}, 'FOSUserBundle') }}
+                </label>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block" name="_submit" type="submit">{{ 'security.login.submit'|trans({}, 'FOSUserBundle') }}</button>
+        </form>
+    </div>
+</body>
+</html>

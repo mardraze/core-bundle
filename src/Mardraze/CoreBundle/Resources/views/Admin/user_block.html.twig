@@ -1,0 +1,7 @@
+<li role="presentation" class="dropdown-header">{{ 'Zalogowany jako:' }} {{ app.user.getUsername }}</li>
+<li role="presentation">
+    <a role="menuitem" tabindex="-1" href="{{ url('fos_user_change_password') }}">{{ 'Zmień hasło' | trans }}</a>
+</li>
+<li role="presentation">
+    <a role="menuitem" tabindex="-1" href="{{ url('fos_user_security_logout') }}">{{ 'Wyloguj' | trans }}</a>
+</li>

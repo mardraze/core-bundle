@@ -9,3 +9,8 @@
 /composer.phar
 /vendor/
 /web/bundles/
+.settings
+.buildpath
+.project
+.idea
+php_errors.log

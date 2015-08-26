@@ -1,0 +1,13 @@
+{{ namespaceRoot }}\Entity\{{ entityBig }}:
+    type: entity
+    table: {{ entity }}
+    id:
+        id:
+            type: integer
+            generator:
+                strategy: AUTO
+    fields:
+    {% for name, type in fields %}
+        {{ name }}:
+            type: {{ type }}
+    {% endfor %}
