@@ -2,14 +2,13 @@
 
 namespace Mardraze\CoreBundle\Controller;
 
-use Mardraze\CoreBundle\Service\Depedencies;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class BaseController extends Controller
 {
     /**
-     * @var Depedencies
+     * @var \Mardraze\CoreBundle\Service\Depedencies
      */
     protected $depedencies;
 
