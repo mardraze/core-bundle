@@ -98,7 +98,17 @@ class CoreExtension extends \Twig_Extension
             $int = intval($int).'';
             $grosze = intval($grosze * 100).'';
         }
-        return $this->slownie($int).' PLN'.($grosze > 0 ? (' '.$this->slownie($grosze).' gr') : '');
+        $result = '';
+        if($int < 1000000){
+
+            if($int > 1000){
+                $tysiace = intval($int/1000);
+                $result .= $this->slownie($tysiace).' '.$this->odmiana($tysiace, array('tysiąc', 'tysiące', 'tysięcy')).' ';
+            }
+
+            $result .= $this->slownie($int % 1000).' PLN'.($grosze > 0 ? (' '.$this->slownie($grosze).' gr') : '');
+        }
+        return $result;
     }
 
     private function slownie($int){
@@ -123,7 +133,7 @@ class CoreExtension extends \Twig_Extension
                     $out .= $this->liczba($liczba).' ';
                 else
                     $out .= ($liczba > 1 ? $this->liczba($liczba).' ' : '')
-                        .$this->odmiana( $slowa[4 + $i], $liczba).' ';
+                        .$this->odmiana($liczba, $slowa[4 + $i]).' ';
         }
         return trim($out);
     }
