@@ -213,9 +213,9 @@
         $('form.validate').each(function() {
             var that = this;
             requirejs([
-                '{{ asset('bundles/mardrazecore/js/lib/jquery.validate.min.js') }}',
-                '{{ asset('bundles/mardrazecore/js/lib/additional-methods.min.js') }}',
-                '{{ asset('bundles/mardrazecore/js/lib/jquery.slimscroll.min.js') }}'
+                'jquery.validate.min',
+                'additional-methods.min',
+                'jquery.slimscroll.min'
             ], function () {
                 $.extend($.validator.messages, {
                     required: "To pole jest wymagane.",
@@ -380,4 +380,4 @@
     });
 
 </script>
-<script src="{{ asset('bundles/mardrazecore/js/lib/require.js') }}"></script>
+<script src="{{ asset('bundles/mardrazecore/js/require.js') }}"></script>
