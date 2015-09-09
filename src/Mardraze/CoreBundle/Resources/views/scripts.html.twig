@@ -214,6 +214,7 @@
             var that = this;
             requirejs([
                 '{{ asset('bundles/mardrazecore/js/lib/jquery.validate.min.js') }}',
+                '{{ asset('bundles/mardrazecore/js/lib/additional-methods.min.js') }}',
                 '{{ asset('bundles/mardrazecore/js/lib/jquery.slimscroll.min.js') }}'
             ], function () {
                 $.extend($.validator.messages, {
