@@ -526,7 +526,7 @@ class Depedencies {
     }
 
     /**
-     * @return UserManagerInterface
+     * @return \FOS\UserBundle\Model\UserManagerInterface
      */
     public function getUserManager(){
         return $this->get('fos_user.user_manager');
@@ -545,7 +545,6 @@ class Depedencies {
     }
 
     public function sendSms($phones, $templateStr, $parameters = array()) {
-        return true; //wylaczone smsy
         $template = $this->getTwig()->loadTemplate($templateStr);
         $message_sms = $template->renderBlock('message_sms', $parameters);
         $sms = $this->get('mardraze_core.sms');
