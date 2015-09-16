@@ -9,6 +9,7 @@
 
 namespace Mardraze\CoreBundle\Service;
 
+use FOS\UserBundle\Model\UserManagerInterface;
 
 class Depedencies {
 
@@ -51,6 +52,13 @@ class Depedencies {
         return $this->getDoctrine()->getRepository($this->getRepositoryName($str));
     }
 
+    public function getRepositoryName($str){
+        if(strpos($str, ':') === false){
+            $str = BUNDLE_NAME.':'.$str;
+        }
+        return $str;
+    }
+
     public function persist($obj){
         $this->getManager()->persist($obj);
         return $this;
@@ -70,10 +78,6 @@ class Depedencies {
 
     public function getParameter($str){
         return $this->container->getParameter($str);
-    }
-
-    public function getContainer(){
-        return $this->container;
     }
 
     public function get($str){
@@ -165,34 +169,39 @@ class Depedencies {
             throw new \Exception('Subject is empty');
         }
         $bodyHtml = $template->renderBlock('message_html', $parameters);
-        $bodyText = trim($template->renderBlock('message_text', $parameters));
+        $bodyText = '';
+        try{
+            $bodyText = trim($template->renderBlock('message_text', $parameters));
+        }catch(\Exception $ex){
+            $bodyText = strip_tags($bodyHtml);
+        }
         if(!$from){
             if($this->container->hasParameter('delivery_address')){
                 $from = $this->getParameter('delivery_address');
             }else{
                 $from = $this->getParameter('mailer_user');
             }
-            if($this->getParameter('mailer_from_name')){
-                $from = array($from => $this->getParameter('mailer_from_name'));
-            }
         }
 
         $msg = $this->getMailer()->createMessage()
             ->setSubject($subject)
-            ->setBody($bodyText, 'text/plain')
+            ->setBody($bodyHtml, 'text/html')
             ->setFrom($from)
-            ->addPart($bodyHtml, 'text/html')
         ;
         return $msg;
     }
 
-    public function sendEmail($addresses, $template, $parameters = array(), $from = null, $attachments = array()) {
+    public function sendEmail($addresses, $template, $parameters = array(), $from = null, $attachments = array(), $options = array()) {
         $msg = $this->getMessage($template, $parameters, $from);
         if(!is_array($addresses)){
-            $addresses = array($addresses);
+            $addresses = array($addresses => $addresses);
         }
-        if($this->container->hasParameter('mailer_replyto')){
-            $msg->setReplyTo($this->getParameter('mailer_replyto'));
+        if(array_key_exists('reply_to', $options)){
+            $msg->setReplyTo($options['reply_to']);
+        }else{
+            if($this->container->hasParameter('mailer_replyto')){
+                $msg->setReplyTo($this->getParameter('mailer_replyto'));
+            }
         }
         $msg->setTo($addresses);
         foreach ($attachments as $attachment) {
@@ -205,8 +214,8 @@ class Depedencies {
             }
             $msg->attach($att);
         }
-
-        return $this->getMailer()->send($msg);
+        $failed = $this->getParameter('error_report_emails');
+        return $this->getMailer()->send($msg, $failed);
     }
 
 
@@ -251,16 +260,14 @@ class Depedencies {
         return $dir;
     }
 
-    public function touchWeb($file){
-        return $this->touch(realpath($this->getParameter('kernel.root_dir').'/../web/'.$file), true);
-    }
-
     public function touch($file, $absolute = false){
         if(!$absolute){
-            $file = $this->getParameter('kernel.root_dir').'/files/'.$file;
+            $file = $this->getParameter('kernel.root_dir').'/'.$file;
         }
         $this->mkdir(dirname($file), true);
-        touch($file);
+        if(!file_exists($file)){
+            touch($file);
+        }
         return $file;
     }
 
@@ -285,11 +292,17 @@ class Depedencies {
             $res = str_replace('//', '/', 'views/'.implode('/', $path));
         }
 
+        if(!$bundle){
+            $bundle = BUNDLE_NAME;
+        }
         return $this->get('kernel')->locateResource('@'.$bundle).'Resources/'.$res;
     }
 
 
     public function bundleName($bundle = null){
+        if(!$bundle){
+            $bundle = BUNDLE_NAME;
+        }
         if(strpos($bundle, '\\') !== false){
             $arr = explode('\\', $bundle);
             $bundle = array_pop($arr);
@@ -328,6 +341,12 @@ class Depedencies {
         return $this->getParameter('kernel.environment') == 'prod';
     }
 
+    /**
+     * @return CloudManager
+     */
+    public function getCloudManager(){
+        return $this->get('mardraze_core.cloud_manager');
+    }
 
     /**
      * @return \AmazonS3
@@ -366,6 +385,10 @@ class Depedencies {
      */
     public function getGoogleDriveApi(){
         return $this->get('mardraze_core.google_drive_api');
+    }
+
+    public function hasPackage($package){
+        return in_array($package, $this->getCloudManager()->getMyPackages());
     }
 
     public function getProcessData($cmd){
@@ -411,7 +434,7 @@ class Depedencies {
         file_put_contents($file, $shFile."\n", FILE_APPEND);
         $shFile = $file;
         $this->killOldProcess($shFile);
-        $logFile = $this->touch('logs/runSh/'.basename($shFile).'.log');
+        $logFile = $this->touch('logs/'.BUNDLE_NAME.'/runSh/'.basename($shFile).'.log');
         chmod($shFile, 0755);
         $cmd = sprintf("%s >> %s 2>&1 & echo $! > %s", $shFile, $logFile, '/dev/null');
 
@@ -489,18 +512,25 @@ class Depedencies {
      * @param array $roles
      * @return \Mardraze\CoreBundle\Entity\User
      */
-    public function createUser($name, $email, $password, $roles = array()){
+    public function createUser($name, $email, $password, $roles = array(), $enabled = true){
         $userManager = $this->get('fos_user.user_manager');
         $user = $userManager->createUser();
         $user->setUsername($name);
         $user->setEmail($email);
         $user->setPlainPassword($password);
-        $user->setEnabled(true);
+        $user->setEnabled($enabled);
+        $roles = array_filter($roles);
         $user->setRoles($roles);
         $userManager->updateUser($user, true);
         return $user;
     }
 
+    /**
+     * @return UserManagerInterface
+     */
+    public function getUserManager(){
+        return $this->get('fos_user.user_manager');
+    }
     public function isMethodPost(){
         return $this->getRequest()->isMethod('POST');
     }
@@ -514,14 +544,8 @@ class Depedencies {
         $this->get('fos_user.user_manager')->updateUser($user, true);
     }
 
-    /**
-     * @return \Mardraze\CoreBundle\Service\Sms\Sms
-     */
-    public function getSms() {
-        return $this->get('mardraze_core.sms');
-    }
-
     public function sendSms($phones, $templateStr, $parameters = array()) {
+        return true; //wylaczone smsy
         $template = $this->getTwig()->loadTemplate($templateStr);
         $message_sms = $template->renderBlock('message_sms', $parameters);
         $sms = $this->get('mardraze_core.sms');
@@ -637,8 +661,9 @@ class Depedencies {
     }
 
     public function authUser($user){
+        $this->getSession()->clear();
         if($user){
-            if($user > 0){
+            if(is_int($user) && $user > 0){
                 $user = $this->getRepository('MardrazeCoreBundle:User')->find($user);
             }
             $token = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
@@ -661,15 +686,63 @@ class Depedencies {
         return new \Doctrine\ORM\QueryBuilder($this->getManager());
     }
 
+    /**
+     * @return \Mardraze\CoreBundle\Service\Sms\Sms
+     */
+    public function getSms() {
+        return $this->get('mardraze_core.sms');
+    }
+
     public function delete($repository, $where, $raw = false){
         if(!is_array($where) && $where > 0){
             $where = array('id' => $where);
         }
-        $tableName = $this->getManager()->getClassMetadata($repository)->getTableName();
-        if($raw){
-            return $this->getConnection()->exec('DELETE FROM `'.$tableName.'` WHERE '.implode(' AND ', $where));
+        if(strpos($repository, ':')){
+            $tableName = $this->getManager()->getClassMetadata($repository)->getTableName();
+            return $this->getConnection()->delete($tableName, $where);
         }
-        return $this->getConnection()->delete($tableName, $where);
+        return $this->getConnection()->exec('DELETE FROM `'.$repository.'` WHERE '.implode(' AND ', $where));
+    }
+    public function getRepositoryTableName($repository){
+        return $this->getManager()->getClassMetadata($repository)->getTableName();
+    }
+    public function tableCount($repository, $where = array()){
+        if(!is_array($where) && $where > 0){
+            $where = array('id' => $where);
+        }
+        $tableName = $this->getManager()->getClassMetadata($repository)->getTableName();
+
+        $rows = $this->getConnection()->fetchAll('SELECT COUNT(*) as count_all FROM `'.$tableName.'` WHERE '.implode(' AND ', $where));
+        return $rows[0]['count_all'];
+    }
+
+    public function fetchOne($repository, $where = array()){
+        $rows = $this->fetchAll($repository, $where);
+        if(count($rows) > 0){
+            return $rows[0];
+        }
+    }
+    public function fetchAll($repository, $where = array(), $page = null, $perPage = null){
+        $where = $this->makeWhereArray($where);
+        if(strpos($repository, ':') !== false){
+
+            $tableName = $this->getManager()->getClassMetadata($repository)->getTableName();
+        }else{
+            $tableName = $repository;
+        }
+
+        $rows = $this->getConnection()->fetchAll('SELECT * FROM `'.$tableName.'`'.($where ? (' WHERE '.implode(' AND ', $where)) : '').' '.($page ? (' LIMIT '.($page-1)*$perPage).','.$perPage : ''));
+        return $rows;
+    }
+    private function makeWhereArray($where){
+        if(!is_array($where)) {
+            if ($where > 0) {
+                $where = array('id = ' . $where);
+            }else{
+                $where = array($where);
+            }
+        }
+        return $where;
     }
 
     /**
@@ -698,6 +771,119 @@ class Depedencies {
      */
     public function getMenuMaker(){
         return $this->get("mardraze_onepage.menu_maker");
+    }
+
+    /**
+     * @return \Ivory\GoogleMap\Services\Geocoding\Geocoder
+     */
+    public function getMapsGeocoder(){
+        return $this->get('ivory_google_map.geocoder');
+    }
+    private function geocodeRequest($q, $key, $googleParamName = null){
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json?'.($googleParamName ? $googleParamName : 'address').'='.urlencode($q).'&language=pl&key='.$key;
+        $json = $this->getCache()->fetch($url);
+        if(!$json){
+            $json = file_get_contents($url);
+        }
+        $resp = json_decode($json, true);
+        if($resp['status'] == 'OK'){
+            $this->getCache()->save($url, $json);
+        }else{
+            $this->getLogger()->error(var_export(array(
+                'geocodeRequest', $q, $key, $googleParamName, $resp
+            ), true));
+        }
+        return $resp;
+    }
+
+    public function geocodeAddress($q, $key, $googleParamName = null){
+        $resp = $this->geocodeRequest($q, $key, $googleParamName);
+        if(array_key_exists('results', $resp) && count($resp['results']) > 0){
+            $res = array();
+            $result = $resp['results'][0];
+            foreach($result['address_components'] as $component){
+                $types = $component['types'];
+                foreach($types as $type){
+                    $res[$type] = $component['long_name'];
+                }
+            }
+            $res['latitude'] = $result['geometry']['location']['lat'];
+            $res['longitude'] = $result['geometry']['location']['lng'];
+            return $res;
+        }
+    }
+    /**
+     * @param $q
+     * @param $key
+     * @return mixed
+     */
+    public function geocodeComponenents($q, $key, $googleParamName = null){
+        $resp = $this->geocodeRequest($q, $key, $googleParamName);
+        if(array_key_exists('results', $resp) && count($resp['results']) > 0){
+            $result = $resp['results'][0];
+            return $result['address_components'];
+        }
+        return array();
+    }
+
+    public function geocodeArea($q, $key, $googleParamName = null){
+        $components = $this->geocodeComponenents($q, $key, $googleParamName);
+        $res = array();
+        foreach ($components as $component) {
+            $types = $component['types'];
+            $longName = $component['long_name'];
+            if(in_array('administrative_area_level_1', $types)){
+                $res['google_area_1'] = $longName;
+            }
+            if(in_array('administrative_area_level_2', $types)){
+                $res['google_area_2'] = $longName;
+            }
+            if(in_array('administrative_area_level_3', $types)){
+                $res['google_area_3'] = $longName;
+            }
+            if(in_array('locality', $types)){
+                $res['google_locality'] = $longName;
+            }
+            if(in_array('country', $types)){
+                $res['google_country'] = $longName;
+            }
+        }
+        return array_filter($res);
+    }
+
+    /**
+     * @param $q
+     * @return \Ivory\GoogleMap\Services\Geocoding\Result\GeocoderResult
+     */
+    public function geocode($q){
+        $resp = $this->getMapsGeocoder()->geocode($q);
+        if($resp instanceof \Ivory\GoogleMap\Services\Geocoding\Result\GeocoderResponse){
+            $results = $resp->getResults();
+            if($resp->getStatus() == 'OK'){
+                if($results && count($results) > 0){
+                    $result = $results[0];
+                    if($result instanceof \Ivory\GoogleMap\Services\Geocoding\Result\GeocoderResult){
+                        return $result;
+                    }
+                }
+            }else{
+                $this->getLogger()->error('geocode '.$q.' STATUS: '.$resp->getStatus());
+            }
+        }
+    }
+
+    public function getUrlMimeType($url){
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        $content = curl_exec($ch);
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        curl_close($ch);
+        return $contentType;
     }
 
 }
