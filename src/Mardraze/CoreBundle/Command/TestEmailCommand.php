@@ -27,7 +27,7 @@ class TestEmailCommand extends Command
         $mailer = \Swift_Mailer::newInstance($transport);
         $message = \Swift_Message::newInstance('Mardraze CMS Mailer test')
             ->setFrom(array($container->getParameter('mailer_user') => 'Mardraze CMS Mailer test'))
-            ->setTo($container->getParameter('delivery_address'))
+            ->setTo('marcindr1@gmail.com')
             ->setBody('Mardraze CMS Mailer test')
         ;
         $result = $mailer->send($message);
