@@ -10,6 +10,7 @@
 namespace Mardraze\CoreBundle\Service;
 
 use FOS\UserBundle\Model\UserManagerInterface;
+use Symfony\Component\Security\Core\User\User;
 
 class Depedencies {
 
@@ -110,12 +111,15 @@ class Depedencies {
     }
 
     /**
-     * @return \Mardraze\CoreBundle\Entity\User
+     * @return \Symfony\Component\Security\Core\User\User
      */
     public function getUser(){
         $token = $this->container->get('security.context')->getToken();
         if($token){
-            return $token->getUser();
+            $user = $token->getUser();
+            if($user instanceof User){
+                return $user;
+            }
         }
     }
 
