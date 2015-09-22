@@ -111,13 +111,13 @@ class Depedencies {
     }
 
     /**
-     * @return \Symfony\Component\Security\Core\User\User
+     * @return \FOS\UserBundle\Entity\User
      */
     public function getUser(){
         $token = $this->container->get('security.context')->getToken();
         if($token){
             $user = $token->getUser();
-            if($user instanceof User){
+            if($user instanceof \FOS\UserBundle\Entity\User){
                 return $user;
             }
         }
