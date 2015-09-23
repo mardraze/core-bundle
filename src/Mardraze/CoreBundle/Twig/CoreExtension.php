@@ -100,13 +100,15 @@ class CoreExtension extends \Twig_Extension
         }
         $result = '';
         if($int < 1000000){
-
-            if($int > 1000){
-                $tysiace = intval($int/1000);
+            $tysiace = intval($int/1000);
+            if($tysiace > 0){
                 $result .= $this->slownie($tysiace).' '.$this->odmiana($tysiace, array('tysiąc', 'tysiące', 'tysięcy')).' ';
             }
-
-            $result .= $this->slownie($int % 1000).' PLN'.($grosze > 0 ? (' '.$this->slownie($grosze).' gr') : '');
+            $setki = $int % 1000;
+            if($setki > 0 || !$tysiace){
+                $result .= $this->slownie($setki).' PLN';
+            }
+            $result .= ($grosze > 0 ? (' '.$this->slownie($grosze).' gr') : '');
         }
         return $result;
     }
