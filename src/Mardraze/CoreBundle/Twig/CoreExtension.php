@@ -106,9 +106,12 @@ class CoreExtension extends \Twig_Extension
             }
             $setki = $int % 1000;
             if($setki > 0 || !$tysiace){
-                $result .= $this->slownie($setki).' PLN';
+                $result .= $this->slownie($setki);
             }
-            $result .= ($grosze > 0 ? (' '.$this->slownie($grosze).' gr') : '');
+            $result .= ' PLN';
+            if($grosze > 0){
+                $result .= ' '.$this->slownie($grosze).' gr';
+            }
         }
         return $result;
     }
