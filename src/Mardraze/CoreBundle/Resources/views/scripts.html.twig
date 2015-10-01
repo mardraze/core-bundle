@@ -213,9 +213,9 @@
         $('form.validate').each(function() {
             var that = this;
             requirejs([
-                'jquery.validate.min',
-                'additional-methods.min',
-                'jquery.slimscroll.min'
+                'jquery.validate',
+                'additional-methods',
+                'jquery.slimscroll'
             ], function () {
                 $.extend($.validator.messages, {
                     required: "To pole jest wymagane.",
