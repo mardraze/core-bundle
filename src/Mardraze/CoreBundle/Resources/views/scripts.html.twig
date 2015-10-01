@@ -188,11 +188,9 @@
                                 $(that).find('.alert-danger').removeClass('hide');
                                 $(that).find('.alert-success').addClass('hide');
                             }
-
-                            $.event.trigger({
-                                type: "email-send",
-                                success : success
-                            });
+                            if(undefined != window.contactSend){
+                                window.contactSend(that);
+                            }
                         });
                     }
                     return false;
