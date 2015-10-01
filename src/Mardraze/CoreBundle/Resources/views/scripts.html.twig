@@ -163,6 +163,9 @@
          */
         $('form.contact-form').each(function(){
             var that = this;
+            loadCss([
+                '{{ asset('bundles/mardrazecore/css/validate.css') }}'
+            ]);
             requirejs([
                 'jquery.validate',
                 'jquery.validate-messages-pl'
@@ -206,6 +209,9 @@
 
         $('form.validate').each(function() {
             var that = this;
+            loadCss([
+                '{{ asset('bundles/mardrazecore/css/validate.css') }}'
+            ]);
             requirejs([
                 'jquery.validate',
                 'additional-methods',
