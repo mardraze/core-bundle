@@ -18,15 +18,16 @@ class CoreExtension extends \Twig_Extension
     public function getFunctions()
     {
         return array(
-            'pager' => new \Twig_Function_Function('pager', array($this, 'pager'), array('is_safe' => array('html'))),
-            'bundleName' => new \Twig_Function_Function('bundleName', array($this, 'bundleName'), array('is_safe' => array('html'))),
-            'uniqid' => new \Twig_Function_Function('uniqid', array($this, 'uniqid'), array('is_safe' => array('html'))),
-            'js' => new \Twig_SimpleFunction('js', array($this, 'jsArray'), array('is_safe' => array('html'))),
-            'lorem' => new \Twig_SimpleFunction('lorem', array($this, 'lorem'), array('is_safe' => array('html'))),
-            'safe_call' => new \Twig_SimpleFunction('safe_call', array($this, 'safe_call'), array('is_safe' => array('html'), 'needs_context' => true, 'needs_environment' => true)),
+            'pager' => new \Twig_Function_Function(array($this, 'pager'), array('is_safe' => array('html'))),
+            'bundleName' => new \Twig_Function_Function(array($this, 'bundleName'), array('is_safe' => array('html'))),
+            'uniqid' => new \Twig_Function_Function(array($this, 'uniqid'), array('is_safe' => array('html'))),
+            'js' => new \Twig_Function_Function(array($this, 'jsArray'), array('is_safe' => array('html'))),
+            'lorem' => new \Twig_Function_Function(array($this, 'lorem'), array('is_safe' => array('html'))),
+            'safe_call' => new \Twig_Function_Function(array($this, 'safe_call'), array('is_safe' => array('html'))),
             'd' => new \Twig_SimpleFunction('d', array($this, 'var_dump'), array('is_safe' => array('html'), 'needs_context' => true, 'needs_environment' => true)),
             'mardraze_menu' => new \Twig_SimpleFunction('mardraze_menu', array($this, 'menu'), array('is_safe' => array('html'))),
             'mardraze_page' => new \Twig_SimpleFunction('mardraze_page', array($this, 'page'), array('is_safe' => array('html'))),
+
         );
     }
 
