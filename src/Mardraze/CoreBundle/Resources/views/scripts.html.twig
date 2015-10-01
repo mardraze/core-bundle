@@ -177,15 +177,22 @@
                         $(that).find('[type=submit]').attr('disabled', 'disabled');
                         $.post($(that).attr('action'), $(this).serialize(), function(res){
                             $(that).find('.ajax-loader').addClass('hide');
+                            var success = false;
                             if(res && res.success){
                                 $(that).find('.alerts').removeClass('hide');
                                 $(that).find('.alert-success').removeClass('hide');
                                 $(that).find('.alert-danger').addClass('hide');
+                                success = true;
                             }else{
                                 $(that).find('.alerts').removeClass('hide');
                                 $(that).find('.alert-danger').removeClass('hide');
                                 $(that).find('.alert-success').addClass('hide');
                             }
+
+                            $.event.trigger({
+                                type: "email-send",
+                                success : success
+                            });
                         });
                     }
                     return false;
