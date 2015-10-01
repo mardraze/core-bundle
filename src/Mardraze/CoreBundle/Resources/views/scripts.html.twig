@@ -171,7 +171,7 @@
         $('form.contact-form').each(function(){
             var that = this;
             requirejs([
-                '{{ asset('bundles/mardrazecore/js/lib/jquery-validation-1.13.1/dist/jquery.validate.min.js') }}'
+                'jquery.validate'
             ], function(){
                 $(that).validate();
                 $(that).submit(function(){
