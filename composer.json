@@ -6,8 +6,5 @@
         "psr-4": {
             "": "src/"
         }
-    },
-    "require": {
-        "symfony/symfony": "2.*"
     }
 }
